@@ -1,5 +1,8 @@
 CFSSL_VERSION ?= 1.2
 
+.PHONY: get-cfssl create-ca create-admin create-proxy create-kube all clean
+.DEFAULT: all
+
 get-cfssl:
 	# get cfssl bin
 	ls /usr/local/bin/cfssl || \
