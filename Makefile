@@ -41,4 +41,5 @@ create-kube:
 
 all: get-cfssl create-ca create-admin create-proxy create-kube
 
-
+clean:
+	rm -f *.csr *.pem
