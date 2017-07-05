@@ -1,9 +1,9 @@
 {
   "CN": "kubernetes",
   "hosts": [
-    "",
+    "master",
     "127.0.0.1",
-    "kubernetes.default"
+    "master.lxd.rsys.io"
   ],
   "key": {
     "algo": "rsa",

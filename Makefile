@@ -1,48 +1,58 @@
-CFSSL_VERSION ?= 1.2
+SHELL			:= /bin/bash
+PATH			:= ${PATH}:${PWD}/bin
+CFSSL_VERSION	?= 1.2
 
-.PHONY: get-cfssl create-ca create-admin create-proxy create-kube all clean
-.DEFAULT: all
+default: all
 
-get-cfssl:
-	# get cfssl bin
-	ls /usr/local/bin/cfssl || \
-	(wget https://pkg.cfssl.org/R$(CFSSL_VERSION)/cfssl_linux-amd64 && \
-	chmod +x cfssl_linux-amd64 && \
-	sudo mv cfssl_linux-amd64 /usr/local/bin/cfssl)
-	# get cfssljson bin
-	ls /usr/local/bin/cfssljson || \
-	(wget https://pkg.cfssl.org/R$(CFSSL_VERSION)/cfssljson_linux-amd64 && \
-	chmod +x cfssljson_linux-amd64 && \
-	sudo mv cfssljson_linux-amd64 /usr/local/bin/cfssljson)
+.PHONY: _get-bin
+.SILENT: _get-bin
+_get-bin:
+	ls bin &> /dev/null || mkdir bin
+	ls bin/cfssl &> /dev/null || \
+		curl -s -o bin/cfssl https://pkg.cfssl.org/R$(CFSSL_VERSION)/cfssl_linux-amd64 && \
+		chmod +x bin/cfssl
+	ls bin/cfssljson &> /dev/null || \
+		curl -s -o bin/cfssljson https://pkg.cfssl.org/R$(CFSSL_VERSION)/cfssljson_linux-amd64 && \
+		chmod +x bin/cfssljson
 
-create-ca:
+.PHONY: ca
+ca: _get-bin
 	cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+	ls -Al ca*.pem
 
-create-admin:
+.PHONY: admin
+admin: _get-bin ca
 	cfssl gencert \
 		-ca=ca.pem \
 		-ca-key=ca-key.pem \
 		-config=ca-config.json \
 		-profile=kubernetes \
 		admin-csr.json | cfssljson -bare admin
+	ls -Al admin*.pem
 
-create-proxy:
+.PHONY: proxy
+proxy: _get-bin ca
 	cfssl gencert \
 		-ca=ca.pem \
 		-ca-key=ca-key.pem \
 		-config=ca-config.json \
 		-profile=kubernetes \
 		kube-proxy-csr.json | cfssljson -bare kube-proxy
+	ls -Al kube-proxy*.pem
 
-create-kube:
+.PHONY: kubernetes
+kubernetes: _get-bin ca
 	cfssl gencert \
 		-ca=ca.pem \
 		-ca-key=ca-key.pem \
 		-config=ca-config.json \
 		-profile=kubernetes \
 		kubernetes-csr.json | cfssljson -bare kubernetes
+	ls -Al kubernetes*.pem
 
-all: get-cfssl create-ca create-admin create-proxy create-kube
+all: clean admin proxy kubernetes
 
 clean:
 	rm -f *.csr *.pem
+	ls -Al
+
