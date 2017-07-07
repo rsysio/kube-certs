@@ -56,3 +56,5 @@ clean:
 	rm -f *.csr *.pem
 	ls -Al
 
+check:
+	openssl x509 -in kubernetes.pem -text
